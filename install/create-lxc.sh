@@ -124,15 +124,12 @@ success ".env gesetzt"
 
 # --- setup.sh aus GitHub holen und ausführen ----------------------------------
 info "Lade setup.sh aus GitHub und starte Installation…"
-SETUP_URL="${GIT_REPO/github.com/raw.githubusercontent.com}/main/install/setup.sh"
-# Normalisieren (entfernt .git am Ende falls vorhanden)
-SETUP_URL="${SETUP_URL%.git}/main/install/setup.sh"
-# Doppeltes /main/main vermeiden (falls URL bereits ohne .git)
-SETUP_URL="${SETUP_URL//\/main\/main\///main/}"
+SETUP_URL="https://raw.githubusercontent.com/benane/veloform/main/install/setup.sh"
 
 pct exec "$CT_ID" -- bash -c "
+  export LANG=C LC_ALL=C
   apt-get update -qq && apt-get install -y -qq curl
-  curl -fsSL '${SETUP_URL}' -o /root/setup.sh
+  curl -fsSL '${SETUP_URL}' -o /root/setup.sh || { echo 'Download fehlgeschlagen: ${SETUP_URL}'; exit 1; }
   chmod +x /root/setup.sh
   GIT_REPO='${GIT_REPO}' bash /root/setup.sh
 "
