@@ -45,13 +45,11 @@ if [[ "$CT_IP" != "dhcp" ]]; then
   read -rp "  Gateway            []: " _gw; [[ -n "$_gw" ]] && CT_GW="$_gw"
 fi
 
-echo ""
-echo -e "${BOLD}Schritt 2: GitHub Repository${RESET}"
-read -rp "  GitHub URL (https://github.com/...): " GIT_REPO
-[[ -n "$GIT_REPO" ]] || error "GitHub URL ist erforderlich"
+# Repo-URL ist fix – das Script kommt ja von dort
+GIT_REPO="https://github.com/benane/veloform"
 
 echo ""
-echo -e "${BOLD}Schritt 3: API-Zugangsdaten${RESET}"
+echo -e "${BOLD}Schritt 2: API-Zugangsdaten${RESET}"
 read -rp "  intervals.icu API Key:        " INTERVALS_KEY
 read -rp "  intervals.icu Athlete ID:     " INTERVALS_ID
 read -rp "  Strava Client ID:             " STRAVA_ID
@@ -63,21 +61,22 @@ echo ""
 info "Zusammenfassung:"
 echo "  Container:  #${CT_ID} (${CT_HOSTNAME}), ${CT_MEMORY}MB RAM, ${CT_DISK}GB, ${CT_CORES} Cores"
 echo "  Netzwerk:   IP=${CT_IP}, Bridge=${CT_BRIDGE}"
-echo "  Repo:       ${GIT_REPO}"
 echo ""
 read -rp "Fortfahren? [j/N] " confirm
 [[ "${confirm,,}" == "j" ]] || { echo "Abgebrochen."; exit 0; }
 
-# --- Debian 12 Template -------------------------------------------------------
-TEMPLATE="debian-12-standard_12.7-1_amd64.tar.zst"
+# --- Debian 12 Template (neueste verfügbare Version) -------------------------
+info "Suche aktuelles Debian 12 Template…"
+pveam update -q 2>/dev/null || true
+TEMPLATE=$(pveam available --section system 2>/dev/null | awk '{print $2}' | grep "^debian-12" | sort -V | tail -1)
+[[ -n "$TEMPLATE" ]] || error "Kein Debian 12 Template in der Proxmox-Liste gefunden"
 TEMPLATE_PATH="${TEMPLATE_STORAGE}:vztmpl/${TEMPLATE}"
 
 if ! pveam list "$TEMPLATE_STORAGE" 2>/dev/null | grep -q "$TEMPLATE"; then
-  info "Lade Debian 12 Template herunter…"
-  pveam update
+  info "Lade Template herunter: ${TEMPLATE}…"
   pveam download "$TEMPLATE_STORAGE" "$TEMPLATE" || error "Template-Download fehlgeschlagen"
 fi
-success "Template vorhanden"
+success "Template vorhanden: ${TEMPLATE}"
 
 # --- LXC Container erstellen --------------------------------------------------
 info "Erstelle LXC Container #${CT_ID}…"
