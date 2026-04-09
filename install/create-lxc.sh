@@ -122,17 +122,18 @@ DB_PATH=/opt/veloform/veloform.db
 EOF
 success ".env gesetzt"
 
-# --- setup.sh aus GitHub holen und ausführen ----------------------------------
-info "Lade setup.sh aus GitHub und starte Installation…"
+# --- setup.sh auf dem Proxmox-Host laden und in Container schieben -----------
+info "Lade setup.sh von GitHub auf den Proxmox-Host…"
 SETUP_URL="https://raw.githubusercontent.com/benane/veloform/main/install/setup.sh"
+curl -fsSL "$SETUP_URL" -o /tmp/veloform-setup.sh \
+  || error "Download fehlgeschlagen. Prüfe ob das Repo public ist: ${SETUP_URL}"
 
-pct exec "$CT_ID" -- bash -c "
-  export LANG=C LC_ALL=C
-  apt-get update -qq && apt-get install -y -qq curl
-  curl -fsSL '${SETUP_URL}' -o /root/setup.sh || { echo 'Download fehlgeschlagen: ${SETUP_URL}'; exit 1; }
-  chmod +x /root/setup.sh
-  GIT_REPO='${GIT_REPO}' bash /root/setup.sh
-"
+pct push "$CT_ID" /tmp/veloform-setup.sh /root/setup.sh
+pct exec "$CT_ID" -- chmod +x /root/setup.sh
+rm -f /tmp/veloform-setup.sh
+
+info "Starte Installation im Container…"
+pct exec "$CT_ID" -- bash -c "DEBIAN_FRONTEND=noninteractive LANG=C GIT_REPO='${GIT_REPO}' bash /root/setup.sh"
 
 # --- Abschluss ----------------------------------------------------------------
 if [[ "$CT_IP" == "dhcp" ]]; then
