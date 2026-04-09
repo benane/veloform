@@ -16,9 +16,7 @@ error()   { echo -e "${RED}[ERROR]${RESET} $*"; exit 1; }
 APP_DIR="/opt/veloform"
 VENV_DIR="${APP_DIR}/venv"
 WWW_DIR="/var/www/veloform"
-GIT_REPO="${GIT_REPO:-}"
-
-[[ -n "$GIT_REPO" ]] || error "GIT_REPO Umgebungsvariable nicht gesetzt. Beispiel: GIT_REPO=https://github.com/USER/REPO.git bash update.sh"
+GIT_REPO="https://github.com/benane/veloform"
 
 info "Neue Version von GitHub holen…"
 git clone --depth=1 "$GIT_REPO" /tmp/veloform-update
