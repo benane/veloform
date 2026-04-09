@@ -49,7 +49,7 @@ success "System-Pakete installiert"
 # --- Node.js 20 LTS ----------------------------------------------------------
 info "Node.js 20 LTS installieren…"
 if ! command -v node &>/dev/null || [[ "$(node -v | cut -d. -f1 | tr -d 'v')" -lt 20 ]]; then
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - -qq
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
   apt-get install -y -qq nodejs
 fi
 success "Node.js $(node -v) installiert"
