@@ -113,6 +113,13 @@ info "Starte Container und warte auf Netzwerk…"
 pct start "$CT_ID"
 sleep 8
 
+# Root-Passwort setzen oder entfernen
+if [[ -n "$CT_PASSWORD" ]]; then
+  pct exec "$CT_ID" -- bash -c "echo 'root:${CT_PASSWORD}' | chpasswd"
+else
+  pct exec "$CT_ID" -- passwd -d root
+fi
+
 # --- .env direkt in den Container schreiben -----------------------------------
 info "Konfiguration in Container schreiben…"
 pct exec "$CT_ID" -- bash -c "mkdir -p /opt/veloform"
