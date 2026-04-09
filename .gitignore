@@ -1,0 +1,25 @@
+# Secrets & Konfiguration
+.env
+*.env.*
+!.env.example
+
+# Datenbank (enthält persönliche Daten – NICHT committen!)
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+node_modules/
+
+# IDE & macOS
+.vscode/
+.idea/
+.DS_Store
+*.swp
