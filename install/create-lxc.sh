@@ -44,6 +44,7 @@ read -rp "  IP (dhcp / x.x.x.x/24) [${CT_IP}]: "  _ip;       [[ -n "$_ip" ]]    
 if [[ "$CT_IP" != "dhcp" ]]; then
   read -rp "  Gateway            []: " _gw; [[ -n "$_gw" ]] && CT_GW="$_gw"
 fi
+read -rsp "  Root-Passwort (leer = kein Passwort): " CT_PASSWORD; echo
 
 # Repo-URL ist fix – das Script kommt ja von dort
 GIT_REPO="https://github.com/benane/veloform"
@@ -89,17 +90,21 @@ else
   [[ -n "$CT_GW" ]] && NET_CONFIG+=",gw=${CT_GW}"
 fi
 
-pct create "$CT_ID" "${TEMPLATE_PATH}" \
-  --hostname    "$CT_HOSTNAME" \
-  --memory      "$CT_MEMORY" \
-  --cores       "$CT_CORES" \
-  --rootfs      "${CT_STORAGE}:${CT_DISK}" \
-  --net0        "$NET_CONFIG" \
-  --unprivileged 1 \
-  --features    nesting=1 \
-  --start       0 \
-  --ostype      debian \
-  --password    "$(openssl rand -base64 12)"
+PCT_ARGS=(
+  "$CT_ID" "${TEMPLATE_PATH}"
+  --hostname    "$CT_HOSTNAME"
+  --memory      "$CT_MEMORY"
+  --cores       "$CT_CORES"
+  --rootfs      "${CT_STORAGE}:${CT_DISK}"
+  --net0        "$NET_CONFIG"
+  --unprivileged 1
+  --features    nesting=1
+  --start       0
+  --ostype      debian
+)
+[[ -n "$CT_PASSWORD" ]] && PCT_ARGS+=(--password "$CT_PASSWORD")
+
+pct create "${PCT_ARGS[@]}"
 
 success "Container #${CT_ID} erstellt"
 
