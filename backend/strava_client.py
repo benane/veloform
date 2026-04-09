@@ -16,6 +16,10 @@ BASE_URL = "https://www.strava.com/api/v3"
 # Einfacher In-Memory-Cache für den Access Token
 _token_cache: dict = {"access_token": None, "expires_at": 0}
 
+# Cache für Bike-Daten (1 Stunde TTL – km ändert sich nicht sekundengenau)
+_bikes_cache: dict = {"bikes": None, "expires_at": 0}
+BIKES_TTL = 3600  # Sekunden
+
 
 async def _get_access_token() -> str:
     """
@@ -48,8 +52,11 @@ async def get_athlete_bikes() -> list[dict]:
     """
     Holt Fahrrad-Details via GET /gear/{id}.
     IDs werden aus STRAVA_BIKE_IDS (kommagetrennt) gelesen.
-    Gibt eine Liste mit {id, name, km} zurück.
+    Ergebnis wird 1 Stunde gecacht um Strava Rate-Limits zu vermeiden.
     """
+    if _bikes_cache["bikes"] is not None and time.time() < _bikes_cache["expires_at"]:
+        return _bikes_cache["bikes"]
+
     ids_raw = os.environ.get("STRAVA_BIKE_IDS", "")
     gear_ids = [i.strip() for i in ids_raw.split(",") if i.strip()]
     if not gear_ids:
@@ -61,7 +68,6 @@ async def get_athlete_bikes() -> list[dict]:
     bikes = []
     async with httpx.AsyncClient() as client:
         for gear_id in gear_ids:
-            # Strava Bike-IDs brauchen "b"-Prefix
             if not gear_id.startswith("b"):
                 gear_id = f"b{gear_id}"
             r = await client.get(f"{BASE_URL}/gear/{gear_id}", headers=headers, timeout=15)
@@ -76,4 +82,6 @@ async def get_athlete_bikes() -> list[dict]:
                 "km":   round((d.get("distance") or 0) / 1000),
             })
 
+    _bikes_cache["bikes"] = bikes
+    _bikes_cache["expires_at"] = time.time() + BIKES_TTL
     return bikes

@@ -87,14 +87,16 @@ async function put(url, body) {
 // Kleines Modal für Aktions-Buttons (Geprüft / Gewartet / Getauscht)
 // ---------------------------------------------------------------------------
 function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
+  const { data: inventoryData } = useApi("/api/maintenance/inventory");
+  const inventory = Array.isArray(inventoryData) ? inventoryData : [];
   const [tab, setTab] = useState("maintain"); // maintain | replace
   const [maintenanceType, setMaintenanceType] = useState("checked");
   const [note, setNote] = useState("");
   const [km, setKm] = useState(bikeKm ?? "");
-  // Für Tausch: neue Komponente
-  const [newBrand, setNewBrand] = useState("");
-  const [newModel, setNewModel] = useState("");
+  const [selectedInventoryId, setSelectedInventoryId] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  const selectedItem = inventory.find((i) => i.id === selectedInventoryId);
 
   async function handleMaintain() {
     setSaving(true);
@@ -114,6 +116,8 @@ function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
     setSaving(true);
     const today = dayjs().format("YYYY-MM-DD");
     const kmVal = km ? parseInt(km) : null;
+    const newBrand = selectedItem?.brand ?? component.brand;
+    const newModel = selectedItem?.model ?? component.model;
     // Alte Komponente ausbauen
     await patch(`/api/maintenance/components/${component.id}/remove`, {
       removed_date: today,
@@ -123,8 +127,8 @@ function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
     const { id: newId } = await post("/api/maintenance/components", {
       bike_id: bike.id,
       type: component.type,
-      brand: newBrand || component.brand,
-      model: newModel || component.model,
+      brand: newBrand,
+      model: newModel,
       installed_date: today,
       installed_km: kmVal,
     });
@@ -137,6 +141,10 @@ function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
       bike_km: kmVal,
       note,
     });
+    // Inventar abziehen
+    if (selectedItem) {
+      await fetch(`/api/maintenance/inventory/${selectedItem.id}/use`, { method: "POST" });
+    }
     onDone();
   }
 
@@ -179,12 +187,17 @@ function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
 
         {tab === "replace" && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <input placeholder={`Marke (${component.brand || "—"})`} value={newBrand}
-              onChange={(e) => setNewBrand(e.target.value)}
-              style={{ padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)", fontSize: 13 }} />
-            <input placeholder={`Modell (${component.model || "—"})`} value={newModel}
-              onChange={(e) => setNewModel(e.target.value)}
-              style={{ padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)", fontSize: 13 }} />
+            <InventoryPicker
+              type={component.type}
+              inventory={inventory}
+              selectedId={selectedInventoryId}
+              onSelect={setSelectedInventoryId}
+            />
+            {selectedItem && (
+              <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                Eingebaut: {[selectedItem.brand, selectedItem.model].filter(Boolean).join(" ")}
+              </div>
+            )}
           </div>
         )}
 
@@ -221,51 +234,76 @@ function ActionModal({ component, bike, bikeKm, onClose, onDone }) {
 }
 
 // ---------------------------------------------------------------------------
+// Inventar-Dropdown für einen bestimmten Typ
+// ---------------------------------------------------------------------------
+function InventoryPicker({ type, inventory, selectedId, onSelect }) {
+  const items = (inventory || []).filter((i) => i.type === type && i.quantity > 0);
+  if (!items.length) return (
+    <div style={{ fontSize: 12, color: "var(--text-muted)", padding: "6px 0" }}>
+      Kein Lagerbestand für diesen Typ
+    </div>
+  );
+  return (
+    <select value={selectedId ?? ""} onChange={(e) => onSelect(e.target.value ? parseInt(e.target.value) : null)}
+      style={{ padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)", color: "var(--text)", border: "1px solid var(--border)", fontSize: 13 }}>
+      <option value="">— Aus Lager wählen —</option>
+      {items.map((i) => (
+        <option key={i.id} value={i.id}>
+          {[i.brand, i.model].filter(Boolean).join(" ")} ({i.quantity}x)
+        </option>
+      ))}
+    </select>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Neue Komponente hinzufügen
 // ---------------------------------------------------------------------------
 function AddComponentForm({ bike, bikeKm, onDone }) {
+  const { data: inventoryData } = useApi("/api/maintenance/inventory");
+  const inventory = Array.isArray(inventoryData) ? inventoryData : [];
   const [type, setType] = useState("chain");
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
+  const [selectedInventoryId, setSelectedInventoryId] = useState(null);
   const [km, setKm] = useState(bikeKm ?? "");
   const [saving, setSaving] = useState(false);
 
+  const selectedItem = inventory.find((i) => i.id === selectedInventoryId);
+
   async function handleSave() {
+    if (!selectedItem) return;
     setSaving(true);
     await post("/api/maintenance/components", {
       bike_id: bike.id,
-      type, brand, model,
+      type,
+      brand: selectedItem.brand,
+      model: selectedItem.model,
       installed_date: dayjs().format("YYYY-MM-DD"),
       installed_km: km ? parseInt(km) : null,
     });
-    setBrand(""); setModel(""); setSaving(false);
+    await fetch(`/api/maintenance/inventory/${selectedItem.id}/use`, { method: "POST" });
+    setSelectedInventoryId(null);
+    setSaving(false);
     onDone();
   }
 
   return (
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end", marginTop: 12 }}>
-      <select value={type} onChange={(e) => setType(e.target.value)} style={{
+      <select value={type} onChange={(e) => { setType(e.target.value); setSelectedInventoryId(null); }} style={{
         padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)",
         color: "var(--text)", border: "1px solid var(--border)", fontSize: 13,
       }}>
         {COMPONENT_TYPES.map((t) => <option key={t.id} value={t.id}>{t.label}</option>)}
       </select>
-      <input placeholder="Marke" value={brand} onChange={(e) => setBrand(e.target.value)} style={{
-        padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)",
-        color: "var(--text)", border: "1px solid var(--border)", fontSize: 13, width: 110,
-      }} />
-      <input placeholder="Modell" value={model} onChange={(e) => setModel(e.target.value)} style={{
-        padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)",
-        color: "var(--text)", border: "1px solid var(--border)", fontSize: 13, width: 140,
-      }} />
+      <InventoryPicker type={type} inventory={inventory} selectedId={selectedInventoryId} onSelect={setSelectedInventoryId} />
       <input type="number" placeholder="KM-Stand" value={km} onChange={(e) => setKm(e.target.value)} style={{
         padding: "6px 10px", borderRadius: 6, background: "var(--surface-2)",
         color: "var(--text)", border: "1px solid var(--border)", fontSize: 13, width: 100,
       }} />
-      <button onClick={handleSave} disabled={saving} style={{
+      <button onClick={handleSave} disabled={saving || !selectedItem} style={{
         padding: "6px 14px", borderRadius: 6, fontSize: 13, cursor: "pointer",
         background: "var(--accent)", color: "#fff", border: "none", fontWeight: 600,
-      }}>{saving ? "…" : "+ Hinzufügen"}</button>
+        opacity: !selectedItem ? 0.5 : 1,
+      }}>{saving ? "…" : "+ Einbauen"}</button>
     </div>
   );
 }
@@ -502,10 +540,10 @@ function InventorySection() {
 // ---------------------------------------------------------------------------
 // Hauptseite
 // ---------------------------------------------------------------------------
-export default function MaintenancePage() {
+export default function MaintenancePage({ initialBikeId = null }) {
   const { data: athlete } = useApi("/api/athlete");
   const bikes = athlete?.bikes ?? [];
-  const [selectedBikeId, setSelectedBikeId] = useState(null);
+  const [selectedBikeId, setSelectedBikeId] = useState(initialBikeId);
   const [modal, setModal] = useState(null); // { component }
   const [showAddForm, setShowAddForm] = useState(false);
   const [showIntervals, setShowIntervals] = useState(false);
@@ -614,17 +652,37 @@ export default function MaintenancePage() {
                 <th style={{ textAlign: "left", padding: "4px 8px" }}>Typ</th>
                 <th style={{ textAlign: "left", padding: "4px 8px" }}>Teil</th>
                 <th style={{ textAlign: "right", padding: "4px 8px" }}>Eingebaut</th>
-                <th style={{ textAlign: "right", padding: "4px 8px" }}>km seitdem</th>
+                <th style={{ textAlign: "right", padding: "4px 8px" }}>km / nächste Wartung</th>
                 <th style={{ padding: "4px 8px" }}></th>
               </tr>
             </thead>
             <tbody>
               {installed.map((c) => {
                 const kmSince = c.installed_km != null ? (bike?.km ?? 0) - c.installed_km : null;
-                const intervalKm = intervalMap[c.type];
-                const isOverdue = intervalKm != null && kmSince != null && kmSince > intervalKm;
-                const isWarning = intervalKm != null && kmSince != null && kmSince > intervalKm * 0.9;
-                const statusColor = isOverdue ? "var(--red)" : isWarning ? "var(--yellow)" : "var(--accent)";
+                const currentBikeKm = bike?.km ?? 0;
+
+                // Für jeden Interval dieses Typs: letzten passenden Log-Eintrag finden
+                const componentIntervals = (intervals || []).filter((iv) => iv.component_type === c.type);
+                const nextDues = componentIntervals.map((iv) => {
+                  const lastEntry = (log || [])
+                    .filter((l) => {
+                      if (l.component_type !== c.type) return false;
+                      if (iv.action_type === "replaced") return l.action === "replaced";
+                      return l.action === "replaced" || (l.action === "maintained" && l.maintenance_type === iv.action_type);
+                    })
+                    .sort((a, b) => (b.bike_km ?? 0) - (a.bike_km ?? 0))[0];
+                  const lastKm = lastEntry?.bike_km ?? c.installed_km ?? 0;
+                  const nextDueKm = lastKm + iv.interval_km;
+                  const kmLeft = nextDueKm - currentBikeKm;
+                  return { action_type: iv.action_type, kmLeft, nextDueKm };
+                }).sort((a, b) => a.kmLeft - b.kmLeft); // dringlichstes zuerst
+
+                // Warnfarbe aus aktiven Alerts ableiten
+                const activeAlerts = bikeAlerts.filter((a) => a.type === c.type);
+                const hasReplacement = activeAlerts.some((a) => a.action_type === "replaced");
+                const hasMaintenance = activeAlerts.length > 0 && !hasReplacement;
+                const statusColor = hasReplacement ? "var(--red)" : hasMaintenance ? "var(--yellow)" : "var(--accent)";
+
                 return (
                   <tr key={c.id} style={{ borderTop: "1px solid var(--border)" }}>
                     <td style={{ padding: "7px 8px", color: "var(--text-muted)", fontSize: 12 }}>
@@ -654,13 +712,27 @@ export default function MaintenancePage() {
                       {c.installed_date ? dayjs(c.installed_date).format("DD.MM.YY") : "—"}
                       {c.installed_km != null && <span style={{ marginLeft: 6 }}>({c.installed_km.toLocaleString("de-AT")} km)</span>}
                     </td>
-                    <td style={{ textAlign: "right", padding: "7px 8px", fontWeight: 600, color: statusColor }}>
-                      {kmSince != null ? `${kmSince.toLocaleString("de-AT")} km` : "—"}
-                      {intervalKm != null && (
-                        <span style={{ fontWeight: 400, fontSize: 11, color: isOverdue ? "var(--red)" : "var(--text-muted)", marginLeft: 4 }}>
-                          / {intervalKm.toLocaleString("de-AT")} km
-                        </span>
-                      )}
+                    <td style={{ textAlign: "right", padding: "7px 8px" }}>
+                      {/* km seit Einbau */}
+                      <div style={{ fontWeight: 600, color: statusColor, fontSize: 13 }}>
+                        {kmSince != null ? `${kmSince.toLocaleString("de-AT")} km` : "—"}
+                      </div>
+                      {/* nächste fällige Wartungen */}
+                      {nextDues.map((nd) => {
+                        const overdue = nd.kmLeft <= 0;
+                        const color = overdue
+                          ? "var(--red)"
+                          : nd.kmLeft < nd.nextDueKm * 0.1
+                          ? "var(--yellow)"
+                          : "var(--text-muted)";
+                        return (
+                          <div key={nd.action_type} style={{ fontSize: 10, color, marginTop: 1 }}>
+                            {overdue
+                              ? `${labelFor(INTERVAL_ACTION_TYPES, nd.action_type)} fällig!`
+                              : `noch ${nd.kmLeft.toLocaleString("de-AT")} km bis ${labelFor(INTERVAL_ACTION_TYPES, nd.action_type)}`}
+                          </div>
+                        );
+                      })}
                     </td>
                     <td style={{ padding: "7px 8px", textAlign: "right" }}>
                       <div style={{ display: "flex", gap: 4, justifyContent: "flex-end" }}>

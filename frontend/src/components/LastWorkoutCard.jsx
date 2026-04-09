@@ -114,7 +114,7 @@ export default function LastWorkoutCard() {
       {/* Chart */}
       {len > 0 && (
         <ResponsiveContainer width="100%" height={200}>
-          <ComposedChart data={chartData} margin={{ top: 4, right: 40, left: -10, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
               dataKey="label"
@@ -130,7 +130,7 @@ export default function LastWorkoutCard() {
               tickLine={false}
               axisLine={false}
               label={{ value: "W", angle: -90, position: "insideLeft", fill: "var(--text-muted)", fontSize: 9 }}
-              domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.85 / 10) * 10), "auto"]}
+              domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.85 / 10) * 10), (dataMax) => Math.ceil((dataMax + 10) / 10) * 10]}
             />
             {/* HR + Cadence – rechts */}
             <YAxis
@@ -139,7 +139,8 @@ export default function LastWorkoutCard() {
               tick={{ fill: "var(--text-muted)", fontSize: 10 }}
               tickLine={false}
               axisLine={false}
-              domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.9 / 10) * 10), "auto"]}
+              width={36}
+              domain={[(dataMin) => Math.max(0, Math.floor(dataMin * 0.9 / 10) * 10), (dataMax) => Math.ceil((dataMax + 10) / 10) * 10]}
             />
             <Tooltip content={<CustomTooltip />} />
 
@@ -183,7 +184,7 @@ export default function LastWorkoutCard() {
         </ResponsiveContainer>
       )}
 
-      <div style={{ display: "flex", gap: 14, marginTop: 8, fontSize: 11, color: "var(--text-muted)" }}>
+      <div style={{ display: "flex", gap: 14, marginTop: 0, fontSize: 11, color: "var(--text-muted)", justifyContent: "center" }}>
         <span style={{ color: "var(--accent)" }}>— Power (W)</span>
         <span style={{ color: "var(--red)" }}>— HR (bpm)</span>
         <span style={{ color: "var(--green)" }}>— Cadence (rpm)</span>

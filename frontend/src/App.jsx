@@ -63,11 +63,14 @@ function Overview() {
 
 function MaintenanceAlerts({ onNavigate }) {
   const { data: alerts } = useApi("/api/maintenance/alerts");
+  const { data: athlete } = useApi("/api/athlete");
   const [dismissed, setDismissed] = useState([]);
 
   if (!alerts?.length) return null;
   const visible = alerts.filter((a) => !dismissed.includes(`${a.bike_id}-${a.type}-${a.action_type}`));
   if (!visible.length) return null;
+
+  const bikeNames = Object.fromEntries((athlete?.bikes ?? []).map((b) => [b.id, b.name]));
 
   return (
     <div style={{ position: "fixed", top: 16, right: 16, zIndex: 300, display: "flex", flexDirection: "column", gap: 8, maxWidth: 320 }}>
@@ -75,6 +78,7 @@ function MaintenanceAlerts({ onNavigate }) {
         const key = `${a.bike_id}-${a.type}-${a.action_type}`;
         const isReplacement = a.action_type === "replaced";
         const color = isReplacement ? "var(--red)" : "var(--yellow)";
+        const bikeName = bikeNames[a.bike_id];
         return (
           <div key={key} style={{
             background: "var(--surface-2)",
@@ -92,11 +96,14 @@ function MaintenanceAlerts({ onNavigate }) {
                 color: "var(--text-muted)", fontSize: 14, padding: "0 0 0 8px", lineHeight: 1,
               }}>✕</button>
             </div>
-            <div style={{ fontSize: 13, marginTop: 4 }}>{a.label}</div>
+            {bikeName && (
+              <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{bikeName}</div>
+            )}
+            <div style={{ fontSize: 13, marginTop: 2 }}>{a.label}</div>
             <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
               {a.km_since.toLocaleString("de-AT")} km seit letzter Aktion · Intervall: {a.interval_km.toLocaleString("de-AT")} km
             </div>
-            <button onClick={() => onNavigate("maintenance")} style={{
+            <button onClick={() => onNavigate("maintenance", a.bike_id)} style={{
               marginTop: 8, padding: "4px 12px", borderRadius: 6, fontSize: 11,
               background: "none", border: `1px solid ${color}`,
               color, cursor: "pointer",
@@ -110,7 +117,13 @@ function MaintenanceAlerts({ onNavigate }) {
 
 export default function App() {
   const [page, setPage] = useState("overview");
+  const [maintenanceBikeId, setMaintenanceBikeId] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  function navigateTo(targetPage, bikeId = null) {
+    setPage(targetPage);
+    if (targetPage === "maintenance" && bikeId) setMaintenanceBikeId(bikeId);
+  }
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth <= 768);
@@ -169,7 +182,7 @@ export default function App() {
         return (
           <>
             <h1 className="page-title">Wartung</h1>
-            <MaintenancePage />
+            <MaintenancePage initialBikeId={maintenanceBikeId} />
           </>
         );
       default:
@@ -191,7 +204,7 @@ export default function App() {
           {renderPage()}
         </main>
       </div>
-      <MaintenanceAlerts onNavigate={setPage} />
+      <MaintenanceAlerts onNavigate={navigateTo} />
     </>
   );
 }

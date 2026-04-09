@@ -77,10 +77,13 @@ export default function HRVOverlay({ days = 60 }) {
       <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 4 }}>
         Dicke Linien = 7-Tage-Durchschnitt. HRV↓ + RHR↑ bei steigender Last = Warnsignal.
       </p>
-      <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12 }}>
+      <div style={{ display: "flex", gap: 16, marginBottom: 16, fontSize: 12, flexWrap: "wrap" }}>
         <span style={{ color: "var(--green)" }}>— HRV (höher = besser)</span>
         <span style={{ color: "#f97316" }}>— RHR (niedriger = besser)</span>
         <span style={{ color: "var(--yellow)", opacity: 0.6 }}>▦ ATL Trainingslast</span>
+        <span style={{ color: "var(--accent)", opacity: 0.8 }}>▦ Wettkampf</span>
+        <span style={{ color: "var(--blue)", opacity: 0.8 }}>▦ Urlaub</span>
+        <span style={{ color: "var(--red)", opacity: 0.8 }}>▦ Krank</span>
       </div>
       <ResponsiveContainer width="100%" height={280}>
         <ComposedChart data={chartData} margin={{ top: 5, right: 48, left: -10, bottom: 0 }}>
@@ -111,22 +114,27 @@ export default function HRVOverlay({ days = 60 }) {
 
           {/* Krankheits- und Urlaubsphasen */}
           {(specialEvents || []).map((ev) => {
-            const isSick = ev.category === "SICK";
+            if (ev.start > lastAvailableDate) return null; // noch nicht begonnen
             const x1 = clampToChart(ev.start);
-            const x2 = clampToChart(ev.end);
+            const x2 = clampToChart(dayjs(ev.end).subtract(1, "day").format("YYYY-MM-DD"));
             if (!x1 || !x2) return null;
+            const cfg = ev.category === "SICK"
+              ? { fill: "var(--red)",    opacity: 0.15, icon: "🤒" }
+              : ev.category === "RACE"
+              ? { fill: "var(--accent)", opacity: 0.18, icon: "🏁" }
+              : { fill: "var(--blue)",   opacity: 0.08, icon: "✈" };
             return (
               <ReferenceArea
                 key={ev.start + ev.name}
                 yAxisId="hrv"
                 x1={x1}
                 x2={x2}
-                fill={isSick ? "var(--red)" : "var(--blue)"}
-                fillOpacity={isSick ? 0.15 : 0.08}
+                fill={cfg.fill}
+                fillOpacity={cfg.opacity}
                 label={{
-                  value: isSick ? `🤒 ${ev.name}` : `✈ ${ev.name}`,
+                  value: `${cfg.icon} ${ev.name}`,
                   position: "insideTop",
-                  fill: isSick ? "var(--red)" : "var(--text-muted)",
+                  fill: cfg.fill,
                   fontSize: 10,
                 }}
               />

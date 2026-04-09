@@ -16,13 +16,15 @@ const CustomTooltip = ({ active, payload, label }) => {
       <div style={{ color: "var(--text-muted)", marginBottom: 6 }}>
         {label} {point?.projected && <span style={{ color: "var(--accent)", fontSize: 11 }}>Projektion</span>}
       </div>
-      {payload.map((p) =>
-        p.value != null && (
-          <div key={p.dataKey} style={{ color: p.color, marginBottom: 2 }}>
-            {p.name}: <strong>{p.value}</strong>
-          </div>
-        )
-      )}
+      {payload
+        .filter((p) => point?.projected || !p.dataKey.startsWith("p"))
+        .map((p) =>
+          p.value != null && (
+            <div key={p.dataKey} style={{ color: p.color, marginBottom: 2 }}>
+              {p.name}: <strong>{p.value}</strong>
+            </div>
+          )
+        )}
       {point?.tss > 0 && (
         <div style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 12 }}>
           Geplant: {point.tss} TSS
@@ -98,7 +100,7 @@ export default function CTLChart({ days = 90, projection = 14 }) {
     <div className="card">
       <div className="card-title">CTL / ATL / TSB — Fitness & Form</div>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData} margin={{ top: 5, right: 16, left: -10, bottom: 0 }}>
+        <LineChart data={chartData} margin={{ top: 15, right: 16, left: -10, bottom: 0 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
           <XAxis
             dataKey="date"
@@ -116,7 +118,7 @@ export default function CTLChart({ days = 90, projection = 14 }) {
             ]}
           />
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12, color: "var(--text-muted)" }} />
+          {/* <Legend wrapperStyle={{ fontSize: 12, paddingTop: 12, color: "var(--text-muted)" }} /> */}
 
           {/* Zielkorridore – solide Linien */}
           <ReferenceLine y={0} stroke="var(--border)" />
@@ -147,22 +149,21 @@ export default function CTLChart({ days = 90, projection = 14 }) {
           })}
 
           {/* Historische Linien (durchgezogen) */}
-          <Line type="monotone" dataKey="ctl" name="CTL" stroke="#3b82f6" strokeWidth={1} dot={false} connectNulls />
-          <Line type="monotone" dataKey="atl" name="ATL" stroke="#eab308" strokeWidth={1} dot={false} connectNulls />
+          <Line type="monotone" dataKey="ctl" name="CTL" stroke="#3b82f6" strokeWidth={0.5} dot={false} connectNulls />
+          <Line type="monotone" dataKey="atl" name="ATL" stroke="#eab308" strokeWidth={0.5} dot={false} connectNulls />
           <Line type="monotone" dataKey="tsb" name="TSB" stroke="#06b6d4" strokeWidth={2} dot={false} connectNulls />
 
           {/* Projektions-Linien (gestrichelt) */}
-          <Line type="monotone" dataKey="pctl" name="CTL (proj.)" stroke="#3b82f6" strokeWidth={1} strokeDasharray="5 4" dot={false} connectNulls legendType="none" />
-          <Line type="monotone" dataKey="patl" name="ATL (proj.)" stroke="#eab308" strokeWidth={1} strokeDasharray="5 4" dot={false} connectNulls legendType="none" />
+          <Line type="monotone" dataKey="pctl" name="CTL (proj.)" stroke="#3b82f6" strokeWidth={0.5} strokeDasharray="5 4" dot={false} connectNulls legendType="none" />
+          <Line type="monotone" dataKey="patl" name="ATL (proj.)" stroke="#eab308" strokeWidth={0.5} strokeDasharray="5 4" dot={false} connectNulls legendType="none" />
           <Line type="monotone" dataKey="ptsb" name="TSB (proj.)" stroke="#06b6d4" strokeWidth={1} strokeDasharray="5 4" dot={false} connectNulls legendType="none" />
         </LineChart>
       </ResponsiveContainer>
 
-      <div style={{ display: "flex", gap: 20, marginTop: 12, fontSize: 11, color: "var(--text-muted)", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 20, marginTop: 0, fontSize: 11, color: "var(--text-muted)", flexWrap: "wrap", justifyContent: "center" }}>
         <span style={{ color: "var(--green)" }}>— &gt; +10: Frisch</span>
         <span style={{ color: "var(--yellow)" }}>— -10 bis 0: Trainingsblock</span>
         <span style={{ color: "var(--red)" }}>— &lt; -25: Überbelastung</span>
-        <span>- - gestrichelt: Projektion basierend auf geplanten Workouts</span>
       </div>
 
       {/* Wochenreviews von Claude – inline wie Coach Notes */}

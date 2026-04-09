@@ -90,7 +90,7 @@ export default function SleepChart({ days = 42 }) {
           Rot = unter 7 Stunden. Linie = 7-Tage-Durchschnitt.
         </p>
         <ResponsiveContainer width="100%" height={220}>
-          <ComposedChart data={finalData} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
+          <ComposedChart data={finalData} margin={{ top: 5, right: 20, left: -10, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
             <XAxis
               dataKey="date"
@@ -103,13 +103,16 @@ export default function SleepChart({ days = 42 }) {
               tick={{ fill: "var(--text-muted)", fontSize: 11 }}
               tickLine={false}
               axisLine={false}
+              width={36}
               tickFormatter={(v) => `${v}h`}
             />
             <Tooltip content={<CustomTooltip />} />
-            <ReferenceLine y={7} stroke="var(--green)" strokeDasharray="4 3" strokeOpacity={0.6}
-              label={{ value: "7h", position: "right", fill: "var(--green)", fontSize: 10 }} />
-            <ReferenceLine y={8} stroke="var(--text-muted)" strokeDasharray="3 3" strokeOpacity={0.3}
-              label={{ value: "8h", position: "right", fill: "var(--text-muted)", fontSize: 10 }} />
+            <ReferenceLine y={6} stroke="var(--red)" strokeDasharray="4 3" strokeOpacity={0.6}
+              label={{ value: "6h", position: "right", fill: "var(--red)", fontSize: 10 }} />
+            <ReferenceLine y={7} stroke="var(--yellow)" strokeDasharray="4 3" strokeOpacity={0.6}
+              label={{ value: "7h", position: "right", fill: "var(--yellow)", fontSize: 10 }} />
+            <ReferenceLine y={8} stroke="var(--green)" strokeDasharray="3 3" strokeOpacity={0.3}
+              label={{ value: "8h", position: "right", fill: "var(--green)", fontSize: 10 }} />
             <Bar dataKey="sleepH" radius={[3, 3, 0, 0]} legendType="none">
               {finalData.map((d, i) => (
                 <Cell key={i} fill={d.shortSleep ? "var(--red)" : "var(--accent)"} opacity={0.7} />

@@ -194,7 +194,8 @@ async def special_events(days: int = 180):
         result = []
         for e in data:
             cat = (e.get("category") or "").upper()
-            if cat not in ("SICK", "HOLIDAY"):
+            is_race = cat.startswith("RACE") or (e.get("type") or "").upper() == "RACE"
+            if cat not in ("SICK", "HOLIDAY") and not is_race:
                 continue
             start = e.get("start_date_local", "")[:10]
             end = e.get("end_date_local", start)[:10]
@@ -204,7 +205,7 @@ async def special_events(days: int = 180):
                 "start": start,
                 "end": end if end >= start else start,
                 "name": e.get("name", cat.title()),
-                "category": cat,
+                "category": "RACE" if is_race else cat,
             })
         return result
     except Exception as ex:
@@ -888,6 +889,14 @@ async def get_alerts():
         if not interval_km:
             continue
 
+        # Kein Alert wenn kein Teil dieses Typs aktuell eingebaut ist
+        installed = conn.execute(
+            "SELECT 1 FROM components WHERE bike_id=? AND type=? AND is_installed=1 LIMIT 1",
+            (bike_id, ctype),
+        ).fetchone()
+        if not installed:
+            continue
+
         if action_type == "replaced":
             last = conn.execute(
                 """SELECT l.bike_km FROM maintenance_log l
@@ -961,6 +970,21 @@ async def update_inventory(item_id: int, data: dict = Body(...)):
     conn.commit()
     conn.close()
     return {"ok": True}
+
+
+@app.post("/api/maintenance/inventory/{item_id}/use")
+async def use_inventory(item_id: int):
+    """Reduziert den Bestand um 1 (beim Einbau eines Teils)."""
+    conn = db.get_db()
+    row = conn.execute("SELECT quantity FROM inventory WHERE id=?", (item_id,)).fetchone()
+    if not row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Item nicht gefunden")
+    new_qty = max(0, row["quantity"] - 1)
+    conn.execute("UPDATE inventory SET quantity=? WHERE id=?", (new_qty, item_id))
+    conn.commit()
+    conn.close()
+    return {"ok": True, "quantity": new_qty}
 
 
 @app.delete("/api/maintenance/inventory/{item_id}")
