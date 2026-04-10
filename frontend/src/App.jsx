@@ -13,10 +13,9 @@ import MaintenancePage from "./components/MaintenancePage";
 
 const PAGES = [
   { id: "overview", label: "Übersicht", icon: "◈" },
-  { id: "fitness", label: "Fitness / Form", icon: "▲" },
   { id: "hrv", label: "HRV & Last", icon: "♡" },
   { id: "sleep", label: "Schlaf", icon: "◐" },
-  { id: "weekly", label: "Wochenübersicht", icon: "▦" },
+  { id: "weekly", label: "Woche", icon: "▦" },
   { id: "fueling", label: "Fueling", icon: "◎" },
   { id: "athlete", label: "Athlet", icon: "◉" },
   { id: "maintenance", label: "Wartung", icon: "⚙" },
@@ -136,13 +135,6 @@ export default function App() {
   const renderPage = () => {
     switch (page) {
       case "overview": return <Overview />;
-      case "fitness":
-        return (
-          <>
-            <h1 className="page-title">Fitness & Form</h1>
-            <CTLChart days={90} />
-          </>
-        );
       case "hrv":
         return (
           <>

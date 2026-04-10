@@ -4,6 +4,10 @@
   padding: 0;
 }
 
+html, body {
+  overflow-x: hidden;
+}
+
 :root {
   --bg: #0f1117;
   --surface: #1a1d27;
@@ -203,10 +207,10 @@ body {
     justify-content: center;
     align-items: center;
     gap: 3px;
-    padding: 6px 4px;
+    padding: 6px 2px;
     font-size: 10px;
-    border-radius: 8px;
-    min-width: 52px;
+    border-radius: 6px;
+    min-width: 0;
     white-space: nowrap;
   }
 
@@ -240,9 +244,9 @@ body {
     font-size: 22px;
   }
 
-  /* Charts etwas niedriger auf Mobile */
-  .recharts-responsive-container {
-    max-height: 220px;
+  /* Charts volle Breite auf Mobile */
+  .recharts-wrapper {
+    max-width: 100%;
   }
 }
 

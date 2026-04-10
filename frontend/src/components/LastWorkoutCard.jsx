@@ -164,7 +164,7 @@ export default function LastWorkoutCard() {
               dataKey="hr"
               name="HR"
               stroke="var(--red)"
-              strokeWidth={1.5}
+              strokeWidth={1}
               dot={false}
               connectNulls
             />

@@ -113,7 +113,7 @@ export default function HRVOverlay({ days = 60 }) {
           <Tooltip content={<CustomTooltip />} />
 
           {/* Krankheits- und Urlaubsphasen */}
-          {(specialEvents || []).map((ev) => {
+          {(specialEvents || []).map((ev, idx) => {
             if (ev.start > lastAvailableDate) return null; // noch nicht begonnen
             const x1 = clampToChart(ev.start);
             const x2 = clampToChart(dayjs(ev.end).subtract(1, "day").format("YYYY-MM-DD"));
@@ -123,6 +123,9 @@ export default function HRVOverlay({ days = 60 }) {
               : ev.category === "RACE"
               ? { fill: "var(--accent)", opacity: 0.18, icon: "🏁" }
               : { fill: "var(--blue)",   opacity: 0.08, icon: "✈" };
+            const spanDays = dayjs(ev.end).diff(dayjs(ev.start), "day");
+            const labelValue = spanDays >= 3 ? `${cfg.icon} ${ev.name}` : cfg.icon;
+            const dy = idx % 2 === 0 ? 4 : 18; // alternierender Versatz bei kurzen Events
             return (
               <ReferenceArea
                 key={ev.start + ev.name}
@@ -132,10 +135,11 @@ export default function HRVOverlay({ days = 60 }) {
                 fill={cfg.fill}
                 fillOpacity={cfg.opacity}
                 label={{
-                  value: `${cfg.icon} ${ev.name}`,
+                  value: labelValue,
                   position: "insideTop",
                   fill: cfg.fill,
                   fontSize: 10,
+                  dy,
                 }}
               />
             );

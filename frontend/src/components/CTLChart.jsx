@@ -1,6 +1,6 @@
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, ReferenceLine, Legend,
+  Tooltip, ResponsiveContainer, ReferenceLine, ReferenceArea, Legend,
 } from "recharts";
 import { useApi } from "../hooks/useApi";
 import dayjs from "dayjs";
@@ -96,6 +96,19 @@ export default function CTLChart({ days = 90, projection = 14 }) {
   const chartData = [...histPoints, ...projPoints];
   const tickInterval = Math.max(1, Math.floor(chartData.length / 12));
 
+  // Aufeinanderfolgende Race-Tage zu Blöcken zusammenfassen
+  const raceBlocks = [];
+  const sortedRaces = [...races].sort((a, b) => a.date.localeCompare(b.date));
+  for (const race of sortedRaces) {
+    const last = raceBlocks[raceBlocks.length - 1];
+    if (last && dayjs(race.date).diff(dayjs(last.end), "day") <= 1) {
+      last.end = race.date;
+      last.items.push(race);
+    } else {
+      raceBlocks.push({ start: race.date, end: race.date, items: [race] });
+    }
+  }
+
   return (
     <div className="card">
       <div className="card-title">CTL / ATL / TSB — Fitness & Form</div>
@@ -134,16 +147,32 @@ export default function CTLChart({ days = 90, projection = 14 }) {
             label={{ value: "Heute", position: "top", fill: "var(--text-muted)", fontSize: 10 }}
           />
 
-          {/* Race-Events – nur vertikale Linie, kein Label */}
-          {races.map((race) => {
-            const color = RACE_COLORS[race.category] || "var(--red)";
+          {/* Race-Events: einzelne Tage → Linie, mehrtägig → ReferenceArea */}
+          {raceBlocks.map((block) => {
+            const color = RACE_COLORS[block.items[0].category] || "var(--red)";
+            const x1 = dayjs(block.start).format("DD.MM");
+            const x2 = dayjs(block.end).format("DD.MM");
+            if (x1 === x2) {
+              return (
+                <ReferenceLine
+                  key={block.start}
+                  x={x1}
+                  stroke={color}
+                  strokeWidth={block.items[0].category === "RACE_A" ? 2 : 1.5}
+                  strokeDasharray={block.items[0].category === "RACE_A" ? undefined : "4 3"}
+                />
+              );
+            }
             return (
-              <ReferenceLine
-                key={race.date + race.name}
-                x={dayjs(race.date).format("DD.MM")}
+              <ReferenceArea
+                key={block.start}
+                x1={x1}
+                x2={x2}
+                fill={color}
+                fillOpacity={0.12}
                 stroke={color}
-                strokeWidth={race.category === "RACE_A" ? 2 : 1.5}
-                strokeDasharray={race.category === "RACE_A" ? undefined : "4 3"}
+                strokeOpacity={0.5}
+                strokeWidth={1}
               />
             );
           })}
