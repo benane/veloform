@@ -374,7 +374,7 @@ function IntervalsSection({ bike, onDone }) {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       {/* Neues Intervall hinzufügen */}
@@ -496,7 +496,7 @@ function InventorySection() {
               </tr>
             ))}
           </tbody>
-        </table>
+        </table></div>
       )}
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
