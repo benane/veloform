@@ -346,7 +346,7 @@ function IntervalsSection({ bike, onDone }) {
   return (
     <div>
       {(intervals || []).length > 0 && (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16 }}>
+        <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16, minWidth: 340 }}>
           <thead>
             <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
               <th style={{ textAlign: "left", padding: "4px 8px" }}>Komponente</th>
@@ -452,7 +452,7 @@ function InventorySection() {
       )}
 
       {(inventory || []).length > 0 && (
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16 }}>
+        <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginBottom: 16, minWidth: 340 }}>
           <thead>
             <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
               <th style={{ textAlign: "left", padding: "4px 8px" }}>Teil</th>
@@ -646,7 +646,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
         )}
 
         {installed?.length > 0 ? (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: showAddForm ? 16 : 0 }}>
+          <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, marginTop: showAddForm ? 16 : 0, minWidth: 340 }}>
             <thead>
               <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
                 <th style={{ textAlign: "left", padding: "4px 8px" }}>Typ</th>
@@ -755,7 +755,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         ) : (
           <div style={{ color: "var(--text-muted)", fontSize: 13, marginTop: 12 }}>
             Noch keine Komponenten eingetragen.
@@ -801,7 +801,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
       <div className="card" style={{ marginBottom: 20 }}>
         <div className="card-title">Wartungslog</div>
         {log?.length > 0 ? (
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 340 }}>
             <thead>
               <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
                 <th style={{ textAlign: "left", padding: "4px 8px" }}>Datum</th>
@@ -845,7 +845,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         ) : (
           <div style={{ fontSize: 13, color: "var(--text-muted)" }}>Noch keine Einträge.</div>
         )}
@@ -855,7 +855,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
       {history?.length > 0 && (
         <div className="card" style={{ marginBottom: 20 }}>
           <div className="card-title">Teile-Historie</div>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+          <div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 340 }}>
             <thead>
               <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
                 <th style={{ textAlign: "left", padding: "4px 8px" }}>Typ</th>
@@ -888,7 +888,7 @@ export default function MaintenancePage({ initialBikeId = null }) {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         </div>
       )}
 

@@ -196,7 +196,8 @@ export default function SleepChart({ days = 42 }) {
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 8 }}>
                 Naechte unter 6,5h und HRV am Folgetag:
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 280 }}>
                 <thead>
                   <tr style={{ color: "var(--text-muted)" }}>
                     <th style={{ textAlign: "left", padding: "4px 8px" }}>Datum</th>
@@ -218,6 +219,7 @@ export default function SleepChart({ days = 42 }) {
                   ))}
                 </tbody>
               </table>
+              </div>
             </>
           )}
         </div>

@@ -140,7 +140,8 @@ export default function WeeklyOverview({ weeks = 8 }) {
       {/* Detailtabelle */}
       <div className="card">
         <div className="card-title">Details pro Woche</div>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+        <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12, minWidth: 380 }}>
           <thead>
             <tr style={{ color: "var(--text-muted)" }}>
               <th style={{ textAlign: "left", padding: "4px 8px" }}>Woche</th>
@@ -177,6 +178,7 @@ export default function WeeklyOverview({ weeks = 8 }) {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </>
   );

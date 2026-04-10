@@ -131,7 +131,8 @@ function BestEffortsTable({ days, weight }) {
           {tooltip.name}
         </div>
       )}
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+      <div style={{ overflowX: "auto" }}>
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 320 }}>
         <thead>
           <tr style={{ color: "var(--text-muted)", fontSize: 11 }}>
             <th style={{ textAlign: "left", padding: "4px 8px" }}>Dauer</th>
@@ -169,6 +170,7 @@ function BestEffortsTable({ days, weight }) {
           })}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }

@@ -171,6 +171,20 @@ server {
     root ${WWW_DIR};
     index index.html;
 
+    # index.html – nie cachen (damit Updates sofort sichtbar sind)
+    location = /index.html {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
+        add_header Expires "0";
+        try_files \$uri =404;
+    }
+
+    # Hashed Assets (JS/CSS) – lange cachen, da Dateiname sich bei Änderungen ändert
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        try_files \$uri =404;
+    }
+
     # Frontend (React SPA)
     location / {
         try_files \$uri \$uri/ /index.html;
